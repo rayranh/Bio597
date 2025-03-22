@@ -8,9 +8,9 @@ ui <- fluidPage(
   navbarPage("Marek's disease Within-Host Model",
              sidebarLayout(
                sidebarPanel(
-                 sliderInput(inputId = "beta", label = "beta", value = 0.02, min = 0.00, max = 0.5, step = 0.01),
+                 sliderInput(inputId = "beta", label = "Cytolytic infection by CB cell", value = 0.02, min = 0.00, max = 0.5, step = 0.01),
                  
-                 sliderInput(inputId = "beta_2", label = "beta_2", value = 0.003, min = 0.00, max = 0.5, step = 0.001),
+                 sliderInput(inputId = "beta_2", label = "Cytolytic infection by CT cell", value = 0.003, min = 0.00, max = 0.5, step = 0.001),
                  
                  sliderInput(inputId = "nu_A", label = "activation by B cell", value = 0.03, min = 0, max = 0.1, step = 0.01),
                  
@@ -36,10 +36,10 @@ sir_equations <- function(time, variables, parameters) {
   with(as.list(c(variables, parameters)), {
     dB <- -M * B_cells - beta * Cb * B_cells - beta_2 * Ct * B_cells + (g1 * (Cb + Ct) / (g2 + (Cb + Ct)))
     dCb <- M * B_cells + beta * Cb * B_cells + beta_2 * Ct * B_cells - alpha * Cb
-    dT <- -nu_A * Cb * T_cells - nu_b * Ct * T_cells + (h1 * (Cb + Ct) / (h2 + (Cb + Ct)))
-    dAt <- nu_A * Cb * T_cells + nu_b * Ct * T_cells - beta_2 * Ct * At - beta * Cb * At
+    dT <- -M * T_cells - nu_A * Cb * T_cells - nu_b * Ct * T_cells + (h1 * (Cb + Ct) / (h2 + (Cb + Ct)))
+    dAt <- M * T_cells + nu_A * Cb * T_cells + nu_b * Ct * T_cells - beta_2 * Ct * At - beta * Cb * At -M*At
     dLt <- theta * (beta_2 * Ct * At + beta * Cb * At) - mu * Lt
-    dCt <- (1 - theta) * (beta_2 * Ct * At + beta * Cb * At) - alpha_2 * Ct
+    dCt <- (1 - theta) * (beta_2 * Ct * At + beta * Cb * At) - alpha_2 * Ct +M*At
     dZ <- mu * Lt
     df <- -nu_F * Lt * f
     dIf <- nu_F * Lt * f
@@ -53,7 +53,7 @@ server <- function(input, output) {
   #changed to reactive to add B and T cells 
   parameters_values <- reactive({
     c(
-      M = 0.1
+      M = 0.5
       , beta = input$beta          #contact rate with B cells (every 34 hours/ 1.4days) 
       , beta_2 = input$beta_2         #contact rate with T cells (every 333 hour/ 13 days) 
       #, beta_3 = beta_2              #contact rate with Ct cells for At 41 days activated T cells leaving 
@@ -65,7 +65,7 @@ server <- function(input, output) {
       , alpha = 1/3                #death rate of B cells (every 33 hours)
       , alpha_2 = 1/50        #death rate of T cells (every 48 hours)
       , theta = 0.7                 #population of activated T cells 
-      , g1 = 1/15            #incoming B cells (every 15 hours)
+      , g1 = 1/15          #incoming B cells (every 15 hours)
       , g2 =0.001    
       , h1 = 0                      #incoming T cells / determined no incoming T cells 
       , h2 = 10
