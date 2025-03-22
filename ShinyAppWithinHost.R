@@ -20,14 +20,16 @@ ui <- fluidPage(
                  
                  sliderInput(inputId = "T_cells", label = "number of T cells", value = 50, min = 0, max = 100, step = 1)
                ),
-               
+
                mainPanel(
-                 plotOutput("plot")
+                 fluidRow(
+                   column(6, plotOutput("plot1")),   # First plot
+                   column(6, plotOutput("plot2"))    # Second plot
+                 )
                )
              )
   )
 )
-
 #trying to add something 
 
 
@@ -95,31 +97,36 @@ server <- function(input, output) {
   })
   
   # Render the plot
-  output$plot <- renderPlot({
-    sol <- sir_values_1()  # Get the updated solution
-    
-    # Convert the solution to a data frame
+  # Render the first plot
+  output$plot1 <- renderPlot({
+    sol <- sir_values_1()
     sol_df <- as.data.frame(sol)
     
-    # Plot the data
     with(sol_df, {
-      plot(time, B_cells, col = "black", type = "l", ylim = c(0, 100), xlab = "Time (Hours)", 
-           ylab = "Population density", main = "Marek's Model", cex.lab = 1.5, xlim = c(0, 200))
+      plot(time, B_cells, col = "black", type = "l", ylim = c(0, 100), xlab = "Time (Hours)",
+           ylab = "Population density", main = "B and T Cell Dynamics", cex.lab = 1.5, xlim = c(0, 200))
       lines(time, T_cells, col = "red")
       lines(time, Cb, col = "green")
-      lines(time, At, col = "blue")
+      legend("topright", legend = c("B_cells", "T_cells", "Cb"),
+             col = c("black", "red", "green"), lty = 1, bty = "n")
+    })
+  })
+  
+  # Render the second plot
+  output$plot2 <- renderPlot({
+    sol <- sir_values_1()
+    sol_df <- as.data.frame(sol)
+    
+    with(sol_df, {
+      plot(time, At, col = "blue", type = "l", ylim = c(0, 100), xlab = "Time (Hours)",
+           ylab = "Population density", main = "Infected and Tumor Dynamics", cex.lab = 1.5, xlim = c(0, 200))
       lines(time, Lt, col = "purple")
       lines(time, Ct, col = "yellow")
       lines(time, Z, col = "lightblue")
+      legend("topright", legend = c("At", "Lt", "Ct", "Z"),
+             col = c("blue", "purple", "yellow", "lightblue"), lty = 1, bty = "n")
     })
-    
-    # Adding the legend
-    legend("topright", legend = c("B_cells", "T_cells", "Cb", "At", "Lt", "Ct", "Z"),
-           col = c("black", "red", "green", "blue", "purple", "yellow", "lightblue"), 
-           lty = 1, bty = "n")
   })
-  
 }
-
 # Finally, run the Shiny app
 shinyApp(ui = ui, server = server)
