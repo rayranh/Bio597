@@ -125,7 +125,7 @@ server <- function(input, output) {
     
     with(sol_df, {
       plot(time, B_cells, col = "black", type = "l", ylim = c(0, 100), xlab = "Time (Hours)", 
-           ylab = "Population density", main = "Marek's Model", cex.lab = 1.5, xlim = c(0, 200))
+           ylab = "Population density", main = "Spleen/Lymphoid Tissues", cex.lab = 1.5, xlim = c(0, 200))
       lines(time, T_cells, col = "red")
       lines(time, Cb, col = "green")
       lines(time, At, col = "blue")
@@ -141,13 +141,13 @@ server <- function(input, output) {
     sol <- sir_values_1() # storing my output into sol 
     sol_df <- as.data.frame(sol) #converting sol to df 
     
-    with(sol_df, {plot(time, Bb_cells, col = "firebrick", type = "l", ylim = c(0, 100), xlab = "Time (Hours)", 
-                       ylab = "Population density", main = "Marek's Model", cex.lab = 1.5, xlim = c(0, 200))
-      lines(time, Cbb_cells, col = "forestgreen")   
-      lines(time, Tb_cells, col = "pink")
-      lines(time, Atb_cells, col = "steelblue1") 
-      lines(time, Ltb_cells, col = "orchid") 
-      lines(time, Ctb_cells, col = "goldenrod1") 
+    with(sol_df, {plot(time, Bb_cells, col = "black", type = "l", ylim = c(0, 100), xlab = "Time (Hours)", 
+                       ylab = "Population density", main = "Peripheral Blood", cex.lab = 1.5, xlim = c(0, 200))
+      lines(time, Cbb_cells, col = "green")   
+      lines(time, Tb_cells, col = "red")
+      lines(time, Atb_cells, col = "blue") 
+      lines(time, Ltb_cells, col = "purple") 
+      lines(time, Ctb_cells, col = "yellow") 
       legend("topright", legend = c("Cb blood", "T blood", "At blood", "Lt blood", "Ct blood"),
              col = c("forestgreen", "pink", "steelblue1", "orchid", "goldenrod1"), lty = 1, bty = "n")
     })
