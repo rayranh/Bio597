@@ -3,6 +3,8 @@ library(shiny)
 library(shinythemes)
 
 
+### User Interface ### 
+
 ui <- fluidPage(
   theme = shinytheme("yeti"),
   navbarPage("Marek's disease Within-Host Model",
@@ -48,6 +50,8 @@ sir_equations <- function(time, variables, parameters) {
     return(list(c(dB, dCb, dT, dAt, dLt, dCt, dZ, df, dIf)))
   })
 }
+
+#### Server #### 
 
 server <- function(input, output) {
   
@@ -114,8 +118,8 @@ server <- function(input, output) {
   
   # Render the second plot
   output$plot2 <- renderPlot({
-    sol <- sir_values_1()
-    sol_df <- as.data.frame(sol)
+    sol <- sir_values_1() # storing my output into sol 
+    sol_df <- as.data.frame(sol) #converting sol to df 
     
     with(sol_df, {
       plot(time, At, col = "blue", type = "l", ylim = c(0, 100), xlab = "Time (Hours)",

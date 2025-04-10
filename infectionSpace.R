@@ -25,9 +25,10 @@ ui <- fluidPage(
                
                mainPanel(
                  fluidRow(
-                   column(6, plotOutput("plot1")),   # First plot
-                   column(6, plotOutput("plot2")),    # Second plot
-                   column(6, plotOutput("plot3"))     #third plot 
+                   column(6, plotOutput("plot1")),  #First plot
+                   column(6, plotOutput("plot2")),  #Second plot
+                   column(6, plotOutput("plot3")),  #third plot
+                   column(6, plotOutput("plot4"))   #Fourth plot 
                  )
                )
              )
@@ -51,12 +52,12 @@ sir_equations <- function(time, variables, parameters) {
     
     ### entering blood ###   
     
-    dBb <- mu_o*B_fab + mu_o*B_cells - mu_p*Bb_cells - alpha_B*Bb_cells   
-    dCbb <- mu_o*Cb_fab + mu_o*Cb - mu_p*Cbb_cells - alpha_B*Cbb_cells 
-    dTb <-  mu_o*T_fab + mu_o*T_cells - mu_p*Tb_cells - alpha_B*Tb_cells  
-    dAtb <-  mu_o*At_fab + mu_o*At - mu_p*Atb_cells # no death for At cells 
-    dLtb <- mu_o*Lt_fab + mu_o*Lt - mu_p*Ltb_cells # no death for Lt cells  
-    dCtb <-  mu_o*Ct_fab + mu_o*Ct - mu_p*Ctb_cells   
+    dBb <- mu_o*B_Th + mu_o*B_fab + mu_o*B_cells - mu_p*Bb_cells - alpha_B*Bb_cells   
+    dCbb <- mu_o*Cb_Th + mu_o*Cb_fab + mu_o*Cb - mu_p*Cbb_cells - alpha_B*Cbb_cells 
+    dTb <- mu_o*T_Th + mu_o*T_fab + mu_o*T_cells - mu_p*Tb_cells - alpha_B*Tb_cells  
+    dAtb <- mu_o*At_Th + mu_o*At_fab + mu_o*At - mu_p*Atb_cells # no death for At cells 
+    dLtb <- mu_o*Lt_Th + mu_o*Lt_fab + mu_o*Lt - mu_p*Ltb_cells # no death for Lt cells  
+    dCtb <- mu_o*Ct_Th + mu_o*Ct_fab + mu_o*Ct - mu_p*Ctb_cells   
     
     ### infection of bursa ### 
     
@@ -69,7 +70,15 @@ sir_equations <- function(time, variables, parameters) {
     
     ### infection of thymus ###
     
-    return(list(c(dB, dCb, dT, dAt, dLt, dCt, dBb, dCbb, dTb, dAtb, dLtb, dCtb, dB_fab, dCb_fab, dT_fab, dAt_fab, dLt_fab, dCt_fab)))
+    dB_Th <- -M * B_Th  - beta * Cb_Th* B_Th - beta_2 * Ct_Th * B_Th + (g1 * (Cb_Th + Ct_Th) / (g2 + (Cb_Th + Ct_Th))) - mu_o*B_Th + mu_p*Bb_cells 
+    dCb_Th <- M * B_Th + beta * Cb_Th * B_Th + beta_2 * Ct_Th * B_Th - alpha * Cb_Th - mu_o*Cb_Th + mu_p*Cbb_cells 
+    dT_Th <- -M * T_Th -nu_A * Cb_Th * T_Th - nu_b * Ct_Th * T_Th + (h1 * (Cb_Th + Ct_Th) / (h2 + (Cb_Th + Ct_Th))) - mu_o*T_Th + mu_p*Tb_cells 
+    dAt_Th <- -M * T_Th + nu_A * Cb_Th * T_Th + nu_b * Ct_Th * T_Th - beta_2 * Ct_Th * At_Th - beta*Cb_Th*At_Th - M*At_Th - mu_o*At_Th + mu_p * Atb_cells 
+    dLt_Th <- theta * (beta_2 * Ct_Th * At_Th + beta * Cb_Th * At_Th) - mu_o*Lt_Th + mu_p*Ltb_cells 
+    dCt_Th <- (1 - theta) * (beta_2 * Ct_Th * At_Th + beta * Cb_Th * At_Th) - alpha_2 * Ct_Th + M*At_Th - mu_o*Ct_Th + mu_p*Ctb_cells    
+    
+    return(list(c(dB, dCb, dT, dAt, dLt, dCt, dBb, dCbb, dTb, dAtb, dLtb, dCtb, dB_fab, dCb_fab, dT_fab, dAt_fab, dLt_fab, dCt_fab,
+                  dB_Th, dCb_Th, dT_Th, dAt_Th, dLt_Th, dCt_Th)))
   })
 }
 
@@ -125,7 +134,15 @@ server <- function(input, output) {
     T_fab = 2,
     At_fab= 0,
     Lt_fab = 0,
-    Ct_fab = 0 
+    Ct_fab = 0,   
+    
+    ### Thymus Cells ### #breaks when I put more T cells 
+    B_Th = 2,  
+    Cb_Th= 0, 
+    T_Th = 0,
+    At_Th= 0,
+    Lt_Th = 0,
+    Ct_Th = 0
     
   )}) 
   
@@ -176,7 +193,6 @@ server <- function(input, output) {
   }) 
   
   #render the third plot 
-  # Render the second plot
   output$plot3 <- renderPlot({
     sol <- sir_values_1() # storing my output into sol 
     sol_df <- as.data.frame(sol) #converting sol to df 
@@ -192,6 +208,23 @@ server <- function(input, output) {
              col = c("black", "green", "red", "blue", "purple", "yellow"), lty = 1, bty = "n")
     })
   }) 
+  #render the fourth plot 
+  output$plot4 <- renderPlot({
+    sol <- sir_values_1() # storing my output into sol 
+    sol_df <- as.data.frame(sol) #converting sol to df 
+    
+    with(sol_df, {plot(time, B_Th, col = "black", type = "l", ylim = c(0, 100), xlab = "Time (Days)", 
+                       ylab = "Population density", main = "Thymus", cex.lab = 1.5, xlim = c(0, 200/24))
+      lines(time, Cb_Th, col = "green")   
+      lines(time, T_Th, col = "red")
+      lines(time, At_Th, col = "blue") 
+      lines(time, Lt_Th, col = "purple") 
+      lines(time, Ct_Th, col = "yellow") 
+      legend("topright", legend = c("B_fab", "Cb fab", "T fab", "At fab", "Lt fab", "Ct fab"),
+             col = c("black", "green", "red", "blue", "purple", "yellow"), lty = 1, bty = "n")
+    })
+  }) 
+  
   
 }
 # Finally, run the Shiny app
