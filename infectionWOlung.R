@@ -10,30 +10,50 @@ ui <- fluidPage(
   navbarPage("Marek's disease Within-Host Model",
              sidebarLayout(
                sidebarPanel(
-                 sliderInput(inputId = "beta", label = "Cytolytic infection by CB cell", value = 0.02, min = 0.00, max = 0.5, step = 0.01),
+                 sliderInput(inputId = "beta", label = "B cells cytolytically infected by CB", value = 0.01, min = 0.00, max = 0.1, step = 0.01),
                  
-                 sliderInput(inputId = "beta_2", label = "Cytolytic infection by CT cell", value = 0.003, min = 0.00, max = 0.5, step = 0.001),
+                 sliderInput(inputId = "beta_2", label = "T cells cytolytically infected by CT", value = 0.01, min = 0.00, max = 0.1, step = 0.01),  
                  
-                 sliderInput(inputId = "nu_A", label = "activation by B cell", value = 0.03, min = 0, max = 0.1, step = 0.01),
+                 sliderInput(inputId = "mu_o", label = "Emigration from Lymphoid organ", value = 0.05, min = 0, max = 0.2, step = 0.01),
                  
-                 sliderInput(inputId = "nu_B", label = "activation by T cell", value = 0.02, min = 0, max = 0.1, step = 0.01),
+                 sliderInput(inputId = "mu_p", label = "Infiltration from Blood ", value = 0.05, min = 0, max = 0.3, step = 0.01),
                  
-                 sliderInput(inputId = "B_cells", label = "number of B cells", value = 50, min = 0, max = 100, step = 1),
+                 sliderInput(inputId = "nu_A", label = "activation by B cell", value = 0.05, min = 0, max = 0.2, step = 0.01),
                  
-                 sliderInput(inputId = "T_cells", label = "number of T cells", value = 50, min = 0, max = 100, step = 1)
+                 sliderInput(inputId = "nu_B", label = "activation by T cell", value = 0.05, min = 0, max = 0.15, step = 0.01), 
+                 
+                 sliderInput(inputId = "alpha", label = "B cell Death", value = 0.01, min = 0, max = 0.05, step = 0.01),
+                 
+                 sliderInput(inputId = "alpha_2", label = "T cell Death", value = 0.01, min = 0, max = 0.1, step = 0.01),  
+                 
+                 sliderInput(inputId = "alpha_B", label = "B&T cell death in Blood", value = 0.1, min = 0.1, max = 0.3, step = 0.01), 
+                 
+                 sliderInput(inputId = "g1", label = "How fast B cells recruited", value = 50, min = 0, max = 200, step = 10), 
+                 
+                 sliderInput(inputId = "g2", label = "half-max, half of g1", value = 5000, min = 0, max = 20000, step = 10),
+                 
+                 sliderInput(inputId = "h1", label = "How fast T cells recruited", value = 50, min = 0, max = 200, step = 10),  
+                 
+                 sliderInput(inputId = "h2", label = "half-max, half of h1", value = 5000, min = 5000, max = 20000, step = 10)
+                 
+                 
                ),
                
-               mainPanel(
+               mainPanel( 
+                 width = 8,
                  fluidRow(
-                   column(6, plotOutput("plot1")),   # First plot
-                   column(6, plotOutput("plot2")),    # Second plot 
-                   column(6 , plotOutput("plot3"))
-                  )
+                   column(12, plotOutput("plot1"))   # Plot 1 in its own row
+                 ),
+                 fluidRow(
+                   column(12, plotOutput("plot2"))   # Plot 2 in its own row
+                 ),
+                 fluidRow(
+                   column(12, plotOutput("plot3"))   # Plot 3 in its own row
+                 )
                )
              )
   )
 )
-#trying to add something 
 
 
 # Define the system of differential equations (ODEs)
@@ -45,7 +65,7 @@ sir_equations <- function(time, variables, parameters) {
     dCb <- M * B_cells + beta * Cb * B_cells + beta_2 * Ct * B_cells - mu_o*Cb + mu_p*Cbb_cells - alpha*Cb
     dT <- -M * T_cells - nu_A * Cb * T_cells - nu_b * Ct * T_cells + (h1 * (Cb + Ct) / (h2 + (Cb + Ct))) - mu_o*T_cells + mu_p*Tb_cells 
     dAt <- M * T_cells + nu_A * Cb * T_cells + nu_b * Ct * T_cells - beta_2 * Ct * At - beta * Cb * At -M*At - mu_o*At + mu_p*Atb_cells
-    dLt <- theta * (beta_2 * Ct * At + beta * Cb * At) - mu_o*Lt + mu_p*Ltb_cells
+    dLt <- theta * (beta_2 * Ct * At + beta * Cb * At) - mu_o*Lt + mu_p*Ltb_cells #GET RID OF LATENT T CELLS AT SOME RATE 
     dCt <- (1 - theta) * (beta_2 * Ct * At + beta * Cb * At) - alpha_2 * Ct + M*At - mu_o*Ct + mu_p*Ctb_cells
     
     
@@ -80,40 +100,40 @@ server <- function(input, output) {
       M = 0.5
       , beta = input$beta          #contact rate with B cells (every 34 hours/ 1.4days) 
       , beta_2 = input$beta_2         #contact rate with T cells (every 333 hour/ 13 days)  
-      , mu_o = 1/60  
-      , mu_p = 1/30
+      , mu_o = input$mu_o
+      , mu_p = input$mu_p
       , nu_A =  input$nu_A               #Activation rate with T cells CD4+ (333 hours/ 13days)
       , nu_b = input$nu_B                #Activation rate with B cells (166 hours/ 41days)
-      , alpha = 1/33                #death rate of B cells (every 33 hours)
-      , alpha_2 = 1/50        #death rate of T cells (every 48 hours) 
-      , alpha_B = 1/50
+      , alpha = input$alpha                #death rate of B cells (every 33 hours)
+      , alpha_2 = input$alpha_2        #death rate of T cells (every 48 hours) 
+      , alpha_B = input$alpha_B
       , theta = 0.7                 #population of activated T cells 
-      , g1 = 1/15          #incoming B cells (every 15 hours)
-      , g2 =0.001    
-      , h1 = 0                      #incoming T cells / determined no incoming T cells 
-      , h2 = 10
+      , g1 = input$g1          #incoming B cells (every 15 hours)
+      , g2 = input$g2    
+      , h1 = input$h1                      #incoming T cells / determined no incoming T cells 
+      , h2 = input$h2
     )
   })
   
   # Define initial values for the model
   initial_values <- reactive({c( 
-    B_cells = input$B_cells,  
+    B_cells = 1000,  
     Cb = 0, 
-    T_cells = input$T_cells,
+    T_cells =10,
     At = 0,
     Lt = 0,
     Ct = 0, 
     ### blood ### 
-    Bb_cells = 10, 
+    Bb_cells = 100, 
     Cbb_cells = 0, 
-    Tb_cells = 10,
+    Tb_cells = 100,
     Atb_cells = 0,  
     Ltb_cells = 0, 
     Ctb_cells = 0, 
     ### THYMUS ### 
     B_Th = 10,
     Cb_Th = 0,
-    T_Th = 3,
+    T_Th = 1000,
     At_Th = 0,
     Lt_Th = 0,
     Ct_Th = 0
@@ -135,8 +155,8 @@ server <- function(input, output) {
     sol_df <- as.data.frame(sol)
     
     with(sol_df, {
-      plot(time, B_cells, col = "black", type = "l", ylim = c(0, 100), xlab = "Time (Hours)",
-           ylab = "Population density", main = "B and T Cell Dynamics", cex.lab = 1.5, xlim = c(0, 200))
+      plot(time, B_cells, col = "black", type = "l", ylim = c(0, 1000), xlab = "Time (days)",
+           ylab = "Population density", main = "Bursa", cex.lab = 1.5, xlim = c(0, 500/24))
       lines(time, T_cells, col = "red")
       lines(time, Cb, col = "green") 
       lines(time, At, col = "blue") 
@@ -153,8 +173,8 @@ server <- function(input, output) {
     sol_df <- as.data.frame(sol) #converting sol to df 
     
     with(sol_df, {
-      plot(time, Bb_cells, col = "black", type = "l", ylim = c(0, 100), xlab = "Time (Hours)",
-           ylab = "Population density", main = "Infected and Tumor Dynamics", cex.lab = 1.5, xlim = c(0, 200))
+      plot(time, Bb_cells, col = "black", type = "l", ylim = c(0, 1000), xlab = "Time (days)",
+           ylab = "Population density", main = "Peripheral Blood", cex.lab = 1.5, xlim = c(0, 500/24))
       lines(time, Cbb_cells, col = "red")
       lines(time, Tb_cells, col = "green") 
       lines(time, Atb_cells, col = "blue") 
@@ -170,8 +190,8 @@ server <- function(input, output) {
     sol_df <- as.data.frame(sol)
     
     with(sol_df, {
-      plot(time, B_Th, col = "black", type = "l", ylim = c(0, 100), xlab = "Time (Hours)",
-           ylab = "Population density", main = "B and T Cell Dynamics", cex.lab = 1.5, xlim = c(0, 200))
+      plot(time, B_Th, col = "black", type = "l", ylim = c(0, 1000), xlab = "Time (days)",
+           ylab = "Population density", main = "Thymus", cex.lab = 1.5, xlim = c(0, 500/24))
       lines(time, T_Th, col = "red")
       lines(time, Cb_Th, col = "green") 
       lines(time, At_Th, col = "blue") 
@@ -183,5 +203,6 @@ server <- function(input, output) {
   })
   
 }
-# Finally, run the Shiny app
+
+
 shinyApp(ui = ui, server = server)
