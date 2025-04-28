@@ -14,15 +14,15 @@ ui <- fluidPage(
                  
                  sliderInput(inputId = "beta_2", label = "T cells cytolytically infected by CT", value = 0.01, min = 0.00, max = 0.1, step = 0.01),  
                  
-                 sliderInput(inputId = "mu_o", label = "Emigration from Lymphoid organ", value = 0.05, min = 0, max = 0.2, step = 0.01),
+                 sliderInput(inputId = "mu_o", label = "From Lymphoid Organ to PBL", value = 0.05, min = 0, max = 1, step = 0.01),
                  
-                 sliderInput(inputId = "mu_p", label = "Infiltration from Blood ", value = 0.05, min = 0, max = 0.3, step = 0.01),
+                 sliderInput(inputId = "mu_p", label = "From PBL to Lymphoid Organ ", value = 0.05, min = 0, max = 1, step = 0.01),
                  
                  sliderInput(inputId = "nu_A", label = "activation by B cell", value = 0.05, min = 0, max = 0.2, step = 0.01),
                  
                  sliderInput(inputId = "nu_B", label = "activation by T cell", value = 0.05, min = 0, max = 0.15, step = 0.01), 
                  
-                 sliderInput(inputId = "alpha", label = "B cell Death", value = 0.01, min = 0, max = 0.05, step = 0.01),
+                 sliderInput(inputId = "alpha", label = "B cell Death", value = 0.01, min = 0, max = 1, step = 0.01),
                  
                  sliderInput(inputId = "alpha_2", label = "T cell Death", value = 0.01, min = 0, max = 0.1, step = 0.01),  
                  
@@ -34,7 +34,11 @@ ui <- fluidPage(
                  
                  sliderInput(inputId = "h1", label = "How fast T cells recruited", value = 50, min = 0, max = 200, step = 10),  
                  
-                 sliderInput(inputId = "h2", label = "half-max, half of h1", value = 5000, min = 5000, max = 20000, step = 10)
+                 sliderInput(inputId = "h2", label = "half-max, half of h1", value = 5000, min = 5000, max = 20000, step = 10), 
+                 
+                 sliderInput(inputId = "epsilon", label = "feather follicle infection", value = 0.03, min = 0, max = 0.5, step = 0.05), 
+                 
+                 sliderInput(inputId = "alpha_3", label = "death of infected FFE ", value = 0.02, min = 0, max = 0.5, step = 0.05), 
                  
                  
                ),
@@ -90,10 +94,10 @@ sir_equations <- function(time, variables, parameters) {
     dZ_Th <- gamma * Lt_Th 
     
     ### FFE ###  
-    dF <- -Ltb_cells*f*epsilon
-    dIF <- Ltb_cells*f*epsilon
+    df <- -Ltb_cells*f*epsilon
+    dIf <- Ltb_cells*f*epsilon - alpha_3*If 
     
-    return(list(c(dB, dCb, dT, dAt, dLt, dCt, dZ, dBb, dCbb, dTb, dAtb, dLtb, dCtb, dB_Th, dCb_Th, dT_Th, dAt_Th, dLt_Th, dCt_Th, dZ_Th, dF, dIF)))
+    return(list(c(dB, dCb, dT, dAt, dLt, dCt, dZ, dBb, dCbb, dTb, dAtb, dLtb, dCtb, dB_Th, dCb_Th, dT_Th, dAt_Th, dLt_Th, dCt_Th, dZ_Th, df, dIf)))
   })
 }
 
@@ -116,12 +120,13 @@ server <- function(input, output) {
       , alpha_2 = input$alpha_2        #death rate of T cells (every 48 hours) 
       , alpha_B = input$alpha_B 
       , gamma = 1/30                 #rate of tumor formation 
-      , theta = 0.7                 #population of activated T cells 
+      , theta = 0.8                 #population of activated T cells 
       , g1 = input$g1          #incoming B cells (every 15 hours)
       , g2 = input$g2    
       , h1 = input$h1                      #incoming T cells / determined no incoming T cells 
       , h2 = input$h2 
-      , epsilon = 1/30                      #feather follicle infection rate 
+      , epsilon = input$epsilon                      #feather follicle infection rate  
+      , alpha_3 = input$alpha_3
     )
   })
   
@@ -151,7 +156,7 @@ server <- function(input, output) {
     Ct_Th = 0, 
     Z_Th = 0, 
     ### FFE ### 
-    f = 20, 
+    f = 100, 
     If = 0
   )}) 
   # Solve the ODE model using the parameters
