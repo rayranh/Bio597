@@ -22,11 +22,11 @@ ui <- fluidPage(
                  
                  sliderInput(inputId = "nu_B", label = "activation by T cell", value = 0.05, min = 0, max = 0.15, step = 0.01), 
                  
-                 sliderInput(inputId = "alpha", label = "B cell Death", value = 0.01, min = 0, max = 1, step = 0.01),
+                 sliderInput(inputId = "alpha", label = "B cell Death", value = 0.3, min = 0, max = 1, step = 0.01),
                  
                  sliderInput(inputId = "alpha_2", label = "T cell Death", value = 0.01, min = 0, max = 0.1, step = 0.01),  
                  
-                 sliderInput(inputId = "alpha_B", label = "B&T cell death in Blood", value = 0.1, min = 0.1, max = 0.3, step = 0.01), 
+                 sliderInput(inputId = "alpha_B", label = "B&T cell death in Blood", value = 0.1, min = 0, max = 0.3, step = 0.01), 
                  
                  sliderInput(inputId = "g1", label = "How fast B cells recruited", value = 50, min = 0, max = 200, step = 10), 
                  
